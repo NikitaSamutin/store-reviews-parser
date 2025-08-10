@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// Назначение файла: маршруты API. Экспорт теперь отдаёт файл напрямую (без записи на диск) — удобно для serverless.
 const express_1 = __importDefault(require("express"));
 const reviewService_1 = require("../services/reviewService");
 const exportService_1 = require("../services/exportService");
-const path_1 = __importDefault(require("path"));
 const router = express_1.default.Router();
 const reviewService = new reviewService_1.ReviewService();
 const exportService = new exportService_1.ExportService();
@@ -113,7 +113,7 @@ router.get('/reviews', async (req, res) => {
         });
     }
 });
-// Экспорт отзывов
+// Экспорт отзывов — отдаём файл напрямую в ответе
 router.post('/export', async (req, res) => {
     try {
         const { appName, appId, store, ratings, region, startDate, endDate, format = 'csv', total } = req.body;
@@ -141,54 +141,27 @@ router.post('/export', async (req, res) => {
                 error: 'Отзывы не найдены для экспорта'
             });
         }
-        let filePath;
+        // Генерируем имя и формируем содержимое в памяти
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-        const filename = `reviews_${appName || 'all'}_${timestamp}`;
-        if (format === 'json') {
-            filePath = await exportService.exportToJSON(result.reviews, `${filename}.json`);
-        }
-        else {
-            filePath = await exportService.exportToCSV(result.reviews, `${filename}.csv`);
-        }
-        res.json({
-            success: true,
-            data: {
-                filename: path_1.default.basename(filePath),
-                path: filePath,
-                count: result.reviews.length
-            }
-        });
+        const baseName = `reviews_${appName || 'all'}_${timestamp}`;
+        const exportResult = format === 'json'
+            ? await exportService.exportToJSON(result.reviews, `${baseName}.json`)
+            : await exportService.exportToCSV(result.reviews, `${baseName}.csv`);
+        // Для Excel добавляем BOM для CSV, чтобы корректно отображалась кириллица
+        const isCsv = exportResult.contentType.startsWith('text/csv');
+        const bodyString = isCsv ? '\uFEFF' + exportResult.content : exportResult.content;
+        const buffer = Buffer.from(bodyString, 'utf8');
+        // Заголовки скачивания файла
+        res.setHeader('Content-Type', exportResult.contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${exportResult.filename}"`);
+        res.setHeader('Content-Length', buffer.length.toString());
+        return res.status(200).send(buffer);
     }
     catch (error) {
         console.error('Ошибка экспорта:', error);
         res.status(500).json({
             success: false,
             error: 'Ошибка при экспорте отзывов'
-        });
-    }
-});
-// Скачивание экспортированного файла
-router.get('/download/:filename', (req, res) => {
-    try {
-        const { filename } = req.params;
-        const isNetlify = !!process.env.NETLIFY;
-        const baseDir = isNetlify ? '/tmp' : path_1.default.join(__dirname, '..', '..');
-        const filePath = path_1.default.join(baseDir, 'exports', filename);
-        res.download(filePath, (err) => {
-            if (err) {
-                console.error('Ошибка скачивания файла:', err);
-                res.status(404).json({
-                    success: false,
-                    error: 'Файл не найден'
-                });
-            }
-        });
-    }
-    catch (error) {
-        console.error('Ошибка скачивания:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Ошибка при скачивании файла'
         });
     }
 });

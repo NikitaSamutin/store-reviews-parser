@@ -1,10 +1,19 @@
 [build]
   publish = "client/dist"
-  # Build only the frontend client
-  command = "cd client && npm install && npm run build"
+  # Сборка монорепо: сначала API (для серверлесс-функции), затем фронтенд
+  command = "npm ci && npm run build -w packages/api && npm run build -w client"
 
 [build.environment]
   NODE_VERSION = "18"
+
+# Настройка функций Netlify
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"

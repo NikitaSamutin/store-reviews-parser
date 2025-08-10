@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// Назначение файла: конфигурация Express-приложения (middleware, маршруты, обработчики ошибок). Без записи экспортов на диск.
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
@@ -27,13 +28,10 @@ app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 const isNetlify = !!process.env.NETLIFY;
 const baseWritableDir = isNetlify ? '/tmp' : path_1.default.join(__dirname, '..');
 const dataDir = path_1.default.join(baseWritableDir, 'data');
-const exportsDir = path_1.default.join(baseWritableDir, 'exports');
 if (!fs_1.default.existsSync(dataDir)) {
     fs_1.default.mkdirSync(dataDir, { recursive: true });
 }
-if (!fs_1.default.existsSync(exportsDir)) {
-    fs_1.default.mkdirSync(exportsDir, { recursive: true });
-}
+// Директория exports больше не нужна — экспорт отдаётся напрямую в ответе
 // API Routes
 app.use('/api', api_1.default);
 // Health check

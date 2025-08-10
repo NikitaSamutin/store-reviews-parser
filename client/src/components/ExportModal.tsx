@@ -1,3 +1,4 @@
+// Назначение файла: модальное окно экспорта. Теперь скачиваем файл напрямую из ответа /export без отдельного запроса /download.
 import React, { useState } from 'react';
 import { X, Download, FileText, Database } from 'lucide-react';
 import { FilterOptions, ExportRequest, AppSearchResult } from '@/types';
@@ -44,10 +45,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         total: totalReviews // Отправляем общее количество для выгрузки
       };
 
-      const result = await apiService.exportReviews(exportRequest);
-      const blob = await apiService.downloadFile(result.filename);
-      
-      downloadFile(blob, result.filename);
+      // Получаем Blob и имя файла напрямую из /export
+      const { blob, filename } = await apiService.exportReviews(exportRequest);
+      downloadFile(blob, filename);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка экспорта');

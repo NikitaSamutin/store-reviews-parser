@@ -1,3 +1,4 @@
+// Назначение файла: клиентский сервис API (axios). Экспорт теперь получает файл напрямую из /export без отдельной загрузки.
 import axios from 'axios';
 import { 
   ApiResponse, 
@@ -97,8 +98,8 @@ export const apiService = {
     }
   },
 
-  // Экспорт отзывов
-  async exportReviews(request: ExportRequest): Promise<{ filename: string, path: string, count: number }> {
+  // Экспорт отзывов — возвращает Blob и имя файла из заголовков ответа
+  async exportReviews(request: ExportRequest): Promise<{ blob: Blob; filename: string }> {
     try {
       const payload = {
         ...request,
@@ -106,26 +107,25 @@ export const apiService = {
         endDate: request.endDate?.toISOString()
       };
 
-      const response = await api.post<ApiResponse<any>>('/export', payload);
-      return response.data.data;
+      const response = await api.post('/export', payload, {
+        responseType: 'blob'
+      });
+
+      // Извлекаем имя файла из Content-Disposition
+      const disposition = response.headers['content-disposition'] as string | undefined;
+      let filename = 'export';
+      if (disposition) {
+        const match = disposition.match(/filename="?([^";]+)"?/i);
+        if (match && match[1]) filename = decodeURIComponent(match[1]);
+      }
+
+      return { blob: response.data as Blob, filename };
     } catch (error) {
       console.error('Ошибка экспорта отзывов:', error);
       throw new Error('Не удалось экспортировать отзывы');
     }
   },
 
-  // Скачивание файла
-  async downloadFile(filename: string): Promise<Blob> {
-    try {
-      const response = await api.get(`/download/${filename}`, {
-        responseType: 'blob'
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Ошибка скачивания файла:', error);
-      throw new Error('Не удалось скачать файл');
-    }
-  },
 
   // Получение доступных регионов
   async getRegions(): Promise<string[]> {

@@ -1,99 +1,86 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExportService = void 0;
-const csv_writer_1 = require("csv-writer");
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 class ExportService {
+    // Экспорт CSV: формируем данные в памяти, экранируем поля, локализуем дату, нормализуем магазин
     async exportToCSV(reviews, filename) {
         try {
-            const exportDir = path_1.default.join(__dirname, '../../exports');
-            // Создаём директорию если её нет
-            if (!fs_1.default.existsSync(exportDir)) {
-                fs_1.default.mkdirSync(exportDir, { recursive: true });
-            }
             const fileName = filename || `reviews_${Date.now()}.csv`;
-            const filePath = path_1.default.join(exportDir, fileName);
-            const csvWriter = (0, csv_writer_1.createObjectCsvWriter)({
-                path: filePath,
-                header: [
-                    { id: 'id', title: 'ID' },
-                    { id: 'appName', title: 'Название приложения' },
-                    { id: 'store', title: 'Магазин' },
-                    { id: 'rating', title: 'Рейтинг' },
-                    { id: 'title', title: 'Заголовок' },
-                    { id: 'content', title: 'Содержание' },
-                    { id: 'author', title: 'Автор' },
-                    { id: 'date', title: 'Дата' },
-                    { id: 'region', title: 'Регион' },
-                    { id: 'version', title: 'Версия' },
-                    { id: 'helpful', title: 'Полезность' }
-                ],
-                encoding: 'utf8'
-            });
-            const formattedReviews = reviews.map(review => ({
-                ...review,
-                store: review.store === 'google' ? 'Google Play' : 'App Store',
-                date: review.date.toLocaleDateString('ru-RU')
-            }));
-            await csvWriter.writeRecords(formattedReviews);
-            return filePath;
+            // Заголовки CSV (в человеко-читаемом виде на русском)
+            const headers = [
+                'ID',
+                'Название приложения',
+                'Магазин',
+                'Рейтинг',
+                'Заголовок',
+                'Содержание',
+                'Автор',
+                'Дата',
+                'Регион',
+                'Версия',
+                'Полезность',
+            ];
+            // Хелпер экранирования для CSV
+            const escapeCsv = (value) => {
+                const str = value === null || value === undefined ? '' : String(value);
+                // Экранируем двойные кавычки и оборачиваем в кавычки, если встречаются разделители/переводы строк
+                const needsQuotes = /[",\n;]/.test(str);
+                const escaped = str.replace(/"/g, '""');
+                return needsQuotes ? `"${escaped}"` : escaped;
+            };
+            const lines = [];
+            // Разделитель ";" лучше открывается в русской локали Excel
+            const sep = ';';
+            // Заголовок
+            lines.push(headers.join(sep));
+            // Строки данных
+            for (const review of reviews) {
+                const row = [
+                    escapeCsv(review.id),
+                    escapeCsv(review.appName),
+                    escapeCsv(review.store === 'google' ? 'Google Play' : 'App Store'),
+                    escapeCsv(review.rating),
+                    escapeCsv(review.title || ''),
+                    escapeCsv(review.content || ''),
+                    escapeCsv(review.author || ''),
+                    escapeCsv(new Date(review.date).toLocaleDateString('ru-RU')),
+                    escapeCsv(review.region || ''),
+                    escapeCsv(review.version || ''),
+                    escapeCsv(review.helpful ?? ''),
+                ];
+                lines.push(row.join(sep));
+            }
+            const csvContent = lines.join('\n');
+            return {
+                filename: fileName,
+                contentType: 'text/csv; charset=utf-8',
+                content: csvContent,
+            };
         }
         catch (error) {
             console.error('Ошибка экспорта в CSV:', error);
             throw error;
         }
     }
+    // Экспорт JSON: формируем единый объект и сериализуем
     async exportToJSON(reviews, filename) {
         try {
-            const exportDir = path_1.default.join(__dirname, '../../exports');
-            if (!fs_1.default.existsSync(exportDir)) {
-                fs_1.default.mkdirSync(exportDir, { recursive: true });
-            }
             const fileName = filename || `reviews_${Date.now()}.json`;
-            const filePath = path_1.default.join(exportDir, fileName);
             const exportData = {
                 exportDate: new Date().toISOString(),
                 totalReviews: reviews.length,
-                reviews: reviews
+                reviews,
             };
-            fs_1.default.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf8');
-            return filePath;
+            const jsonContent = JSON.stringify(exportData, null, 2);
+            return {
+                filename: fileName,
+                contentType: 'application/json; charset=utf-8',
+                content: jsonContent,
+            };
         }
         catch (error) {
             console.error('Ошибка экспорта в JSON:', error);
             throw error;
-        }
-    }
-    getExportedFiles() {
-        try {
-            const exportDir = path_1.default.join(__dirname, '../../exports');
-            if (!fs_1.default.existsSync(exportDir)) {
-                return [];
-            }
-            return fs_1.default.readdirSync(exportDir)
-                .filter(file => file.endsWith('.csv') || file.endsWith('.json'))
-                .map(file => path_1.default.join(exportDir, file));
-        }
-        catch (error) {
-            console.error('Ошибка получения списка экспортированных файлов:', error);
-            return [];
-        }
-    }
-    deleteExportedFile(filePath) {
-        try {
-            if (fs_1.default.existsSync(filePath)) {
-                fs_1.default.unlinkSync(filePath);
-                return true;
-            }
-            return false;
-        }
-        catch (error) {
-            console.error('Ошибка удаления файла:', error);
-            return false;
         }
     }
 }

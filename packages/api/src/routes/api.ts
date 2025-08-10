@@ -1,8 +1,8 @@
+// Назначение файла: маршруты API. Экспорт теперь отдаёт файл напрямую (без записи на диск) — удобно для serverless.
 import express from 'express';
 import { ReviewService } from '../services/reviewService';
 import { ExportService } from '../services/exportService';
 import { ApiResponse, FilterOptions } from '../types';
-import path from 'path';
 
 const router = express.Router();
 const reviewService = new ReviewService();
@@ -136,7 +136,7 @@ router.get('/reviews', async (req, res) => {
   }
 });
 
-// Экспорт отзывов
+// Экспорт отзывов — отдаём файл напрямую в ответе
 router.post('/export', async (req, res) => {
   try {
     const {
@@ -180,24 +180,26 @@ router.post('/export', async (req, res) => {
       } as ApiResponse<null>);
     }
 
-    let filePath: string;
+    // Генерируем имя и формируем содержимое в памяти
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `reviews_${appName || 'all'}_${timestamp}`;
+    const baseName = `reviews_${appName || 'all'}_${timestamp}`;
 
-    if (format === 'json') {
-      filePath = await exportService.exportToJSON(result.reviews, `${filename}.json`);
-    } else {
-      filePath = await exportService.exportToCSV(result.reviews, `${filename}.csv`);
-    }
+    const exportResult =
+      format === 'json'
+        ? await exportService.exportToJSON(result.reviews, `${baseName}.json`)
+        : await exportService.exportToCSV(result.reviews, `${baseName}.csv`);
 
-    res.json({
-      success: true,
-      data: {
-        filename: path.basename(filePath),
-        path: filePath,
-        count: result.reviews.length
-      }
-    } as ApiResponse<any>);
+    // Для Excel добавляем BOM для CSV, чтобы корректно отображалась кириллица
+    const isCsv = exportResult.contentType.startsWith('text/csv');
+    const bodyString = isCsv ? '\uFEFF' + exportResult.content : exportResult.content;
+    const buffer = Buffer.from(bodyString, 'utf8');
+
+    // Заголовки скачивания файла
+    res.setHeader('Content-Type', exportResult.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${exportResult.filename}"`);
+    res.setHeader('Content-Length', buffer.length.toString());
+
+    return res.status(200).send(buffer);
   } catch (error) {
     console.error('Ошибка экспорта:', error);
     res.status(500).json({
@@ -207,31 +209,6 @@ router.post('/export', async (req, res) => {
   }
 });
 
-// Скачивание экспортированного файла
-router.get('/download/:filename', (req, res) => {
-  try {
-    const { filename } = req.params;
-    const isNetlify = !!process.env.NETLIFY;
-    const baseDir = isNetlify ? '/tmp' : path.join(__dirname, '..', '..');
-    const filePath = path.join(baseDir, 'exports', filename);
-    
-    res.download(filePath, (err) => {
-      if (err) {
-        console.error('Ошибка скачивания файла:', err);
-        res.status(404).json({
-          success: false,
-          error: 'Файл не найден'
-        } as ApiResponse<null>);
-      }
-    });
-  } catch (error) {
-    console.error('Ошибка скачивания:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Ошибка при скачивании файла'
-    } as ApiResponse<null>);
-  }
-});
 
 // Получение доступных регионов
 router.get('/regions', async (req, res) => {
