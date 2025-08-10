@@ -9,7 +9,9 @@ import {
   ExportRequest 
 } from '@/types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api';
+// В продакшене (сборка на Netlify) используем относительные пути, так как фронтенд и API на одном домене.
+// В разработке используем переменную окружения для прокси.
+const API_BASE_URL = import.meta.env.PROD ? '' : (import.meta as any).env?.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
