@@ -8,19 +8,4 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Build API before deploying functions
-[build.processing]
-  skip_processing = false
-
-# API routes via Netlify Functions (must be BEFORE SPA redirect)
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-  force = true
-
-# SPA redirect - all routes go to index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Redirects are handled by client/public/_redirects file
