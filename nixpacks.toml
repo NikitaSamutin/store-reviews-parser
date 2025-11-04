@@ -1,12 +1,12 @@
 # Railway Nixpacks конфигурация для API сервиса
+# Решение проблемы EBUSY: изменён кэш на /root/.npm вместо /app/node_modules/.cache
 
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
 cmds = [
-    "npm cache clean --force",
-    "npm install --prefer-offline --no-audit"
+    "npm ci --prefer-offline --cache /root/.npm"
 ]
 
 [phases.build]
