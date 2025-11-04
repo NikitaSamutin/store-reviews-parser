@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev -w store-reviews-parser-server\" \"npm run dev -w client\"",
     "build": "npm run build -w store-reviews-parser-server && npm run build -w client",
+    "build:api": "npm run build -w store-reviews-parser-server",
     "start": "npm start -w store-reviews-parser-server",
     "install:all": "npm install",
     "smoke": "node scripts/smoke.mjs"
