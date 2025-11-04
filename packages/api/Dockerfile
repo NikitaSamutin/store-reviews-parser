@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install all deps for build but skip optional (e.g., sqlite3)
 COPY package*.json ./
-RUN npm ci --omit=optional
+RUN npm install --omit=optional
 
 # Copy sources and tsconfig
 COPY tsconfig.json ./
@@ -20,7 +20,7 @@ ENV NODE_ENV=production
 
 # Install only production deps (omit optional like sqlite3 to avoid build issues on Alpine)
 COPY package*.json ./
-RUN npm ci --omit=dev --omit=optional
+RUN npm install --omit=dev --omit=optional
 
 # Copy built files
 COPY --from=builder /app/dist ./dist
