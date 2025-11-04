@@ -2,9 +2,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install all deps for build but skip optional (e.g., sqlite3)
+# Install all deps for build (including devDependencies for TypeScript)
 COPY package*.json ./
-RUN npm install --omit=optional
+RUN npm install
 
 # Copy sources and tsconfig
 COPY tsconfig.json ./
