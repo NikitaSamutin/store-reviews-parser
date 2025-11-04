@@ -14,7 +14,7 @@ RUN set -eux; \
       ln -s /app /app/service; \
     fi; \
     cd /app/service; \
-    npm ci; \
+    npm install; \
     npm run build; \
     npm prune --production
 
