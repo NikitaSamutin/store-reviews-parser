@@ -5,8 +5,8 @@ services:
     runtime: node
     region: frankfurt # EU регион (ближе к России)
     plan: free
-    buildCommand: npm ci && npm run build -w store-reviews-parser-server
-    startCommand: npm start -w store-reviews-parser-server
+    buildCommand: npm ci && cd packages/api && npm install && npm run build
+    startCommand: cd packages/api && npm start
     envVars:
       - key: NODE_ENV
         value: production
