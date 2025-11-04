@@ -1,0 +1,17 @@
+# Railway Nixpacks конфигурация для API сервиса
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+    "npm ci --production=false"
+]
+
+[phases.build]
+cmds = [
+    "npm run build:api"
+]
+
+[start]
+cmd = "npm start"
