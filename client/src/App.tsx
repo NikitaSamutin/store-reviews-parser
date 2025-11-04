@@ -9,6 +9,7 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
 import { ReviewsListSkeleton } from './components/ReviewsListSkeleton';
 import { EmptyState } from './components/EmptyState';
+import { ServerStatus } from './components/ServerStatus';
 import debounce from 'lodash.debounce';
 import { apiService } from './services/api';
 import { Review, AppSearchResult, FilterOptions } from './types';
@@ -28,6 +29,41 @@ function App() {
   const [totalReviews, setTotalReviews] = useState(0);
   const [hasMoreReviews, setHasMoreReviews] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [isServerWaking, setIsServerWaking] = useState(false);
+
+  // Keep-alive пинг для Render.com (предотвращает засыпание сервера)
+  useEffect(() => {
+    // Проверяем доступность API при загрузке
+    const checkApiHealth = async () => {
+      const start = Date.now();
+      setIsServerWaking(true);
+      
+      try {
+        await apiService.healthCheck();
+        const duration = Date.now() - start;
+        
+        // Если запрос занял больше 5 секунд, значит был холодный старт
+        if (duration > 5000) {
+          console.log('Server was sleeping, took', duration, 'ms to wake up');
+        }
+      } catch (error) {
+        console.error('Health check failed:', error);
+      } finally {
+        setIsServerWaking(false);
+      }
+    };
+
+    checkApiHealth();
+
+    // Пингуем сервер каждые 12 минут, чтобы он не заснул (Render засыпает через 15 мин)
+    const keepAliveInterval = setInterval(() => {
+      apiService.healthCheck().catch(() => {
+        console.log('Keep-alive ping failed');
+      });
+    }, 12 * 60 * 1000); // 12 минут
+
+    return () => clearInterval(keepAliveInterval);
+  }, []);
 
   // Загрузка отзывов с фильтрами
   const loadReviews = async (newFilters: FilterOptions = filters, reset: boolean = false, targetApp?: AppSearchResult) => {
@@ -152,6 +188,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
+        <ServerStatus isWaking={isServerWaking} />
         <Header />
         
         <main className="container mx-auto px-4 py-8 max-w-7xl">

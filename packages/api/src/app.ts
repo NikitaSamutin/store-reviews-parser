@@ -49,7 +49,7 @@ if (!fs.existsSync(dataDir)) {
 
 // API Routes
 // Если приложение запущено в окружении Netlify, API-маршруты доступны в корне.
-// В локальной среде они доступны по префиксу /api.
+// В локальной среде и на Render они доступны по префиксу /api.
 // Это необходимо для корректной работы прокси в Vite.
 const basePath = isNetlify ? '/.netlify/functions/api' : '/api';
 app.use(basePath, apiRoutes);
@@ -59,8 +59,8 @@ app.get(`${basePath}/health`, (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    version: '1.0.1',
-    runtime: isNetlify ? 'netlify-functions' : 'local'
+    version: '1.0.2',
+    runtime: isNetlify ? 'netlify-functions' : process.env.RENDER ? 'render' : 'local'
   });
 });
 
