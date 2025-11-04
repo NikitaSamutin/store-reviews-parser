@@ -10,8 +10,7 @@ COPY packages/api/package*.json ./
 RUN npm install --production=false
 
 # Копируем исходники API
-COPY packages/api/src ./src
-COPY packages/api/tsconfig.json ./
+COPY packages/api/ ./
 
 # Собираем TypeScript
 RUN npm run build
