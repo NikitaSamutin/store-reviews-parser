@@ -1,13 +1,22 @@
-# Netlify configuration for frontend only (API is on Railway)
+# Netlify configuration for full-stack app (Frontend + API via Functions)
 [build]
   base = "client"
   publish = "dist"
-  command = "npm ci && npm run build"
+  command = "cd .. && npm ci && npm run build:api && cd client && npm ci && npm run build"
+  functions = "../netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
-  # API URL will be set in Netlify UI as environment variable
-  # VITE_API_URL = "https://store-reviews-api-production.up.railway.app/api"
+
+# Build API before deploying functions
+[build.processing]
+  skip_processing = false
+
+# API routes via Netlify Functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
 # SPA redirect - all routes go to index.html
 [[redirects]]
