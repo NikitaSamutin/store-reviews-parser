@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import path from 'path';
 import fs from 'fs';
+import { randomUUID } from 'crypto';
 import apiRoutes from './routes/api';
 
 const app = express();
@@ -27,6 +28,43 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const start = Date.now();
+  const reqId = (req.headers['x-request-id'] as string) || randomUUID();
+  res.setHeader('X-Request-Id', reqId);
+  (req as any).reqId = reqId;
+  const netlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+  const bp = netlify ? '/.netlify/functions/api' : '/api';
+  res.setHeader('X-Base-Path', bp);
+  const runtime = netlify ? 'netlify-functions' : (process.env.RENDER ? 'render' : 'local');
+  res.setHeader('X-Runtime', runtime);
+  const debug = (process.env.DEBUG === '1' || process.env.DEBUG === 'true' || req.headers['x-debug'] === '1');
+  if (debug) {
+    console.log('Request start', {
+      reqId,
+      method: req.method,
+      url: req.originalUrl,
+      query: req.query
+    });
+  }
+  const originalEnd = (res as any).end;
+  (res as any).end = function(...args: any[]) {
+    try {
+      const durationMs = Date.now() - start;
+      res.setHeader('X-Response-Time', `${durationMs}ms`);
+      if (debug) {
+        console.log('Request end', {
+          reqId,
+          status: res.statusCode,
+          durationMs
+        });
+      }
+    } catch {}
+    return originalEnd.apply(this, args);
+  };
+  next();
+});
 
 // Создаём необходимые директории
 // На Netlify функции файловая система только для записи в /tmp
@@ -76,7 +114,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (req: express.Request, res: express.Response) => {
   res.status(404).json({
     success: false,
     error: 'Маршрут не найден'

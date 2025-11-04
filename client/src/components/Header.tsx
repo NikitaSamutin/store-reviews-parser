@@ -1,7 +1,7 @@
 import React from 'react';
-import { Smartphone, Star } from 'lucide-react';
+import { Smartphone, Star, Bug } from 'lucide-react';
 
-export const Header: React.FC = () => {
+export const Header: React.FC<{ onOpenLogs?: () => void }> = ({ onOpenLogs }) => {
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -30,6 +30,13 @@ export const Header: React.FC = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span className="text-sm text-gray-600">Онлайн</span>
             </div>
+
+            <button
+              onClick={onOpenLogs}
+              className="btn btn-ghost btn-sm"
+            >
+              <Bug className="w-4 h-4 mr-2" /> Логи
+            </button>
           </div>
         </div>
       </div>

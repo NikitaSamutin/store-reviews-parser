@@ -5,6 +5,7 @@ import { SearchForm } from './components/SearchForm';
 import { FilterPanel } from './components/FilterPanel';
 import { ReviewsList } from './components/ReviewsList';
 import { ExportModal } from './components/ExportModal';
+import { LogsModal } from './components/LogsModal';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
 import { ReviewsListSkeleton } from './components/ReviewsListSkeleton';
@@ -12,6 +13,7 @@ import { EmptyState } from './components/EmptyState';
 import { ServerStatus } from './components/ServerStatus';
 import debounce from 'lodash.debounce';
 import { apiService } from './services/api';
+import { logger } from './services/logger';
 import { Review, AppSearchResult, FilterOptions } from './types';
 import { DEFAULT_FILTERS, LOAD_MORE_COUNT } from './utils/constants';
 
@@ -30,9 +32,15 @@ function App() {
   const [hasMoreReviews, setHasMoreReviews] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [isServerWaking, setIsServerWaking] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
 
   // Keep-alive пинг для Render.com (предотвращает засыпание сервера)
   useEffect(() => {
+    // Boot log
+    logger.log('info', 'boot', {
+      apiBaseURL: (import.meta as any).env?.VITE_API_URL || '/api',
+      tags: ['client']
+    });
     // Проверяем доступность API при загрузке
     const checkApiHealth = async () => {
       const start = Date.now();
@@ -86,10 +94,26 @@ function App() {
         region: newFilters.region || searchRegion,
       };
       const filtersWithOffset = { ...baseFilters, offset: currentOffset };
+      const t0 = Date.now();
+      logger.log('info', 'reviews.load', {
+        appId: appToUse.id,
+        store: filtersWithOffset.store,
+        region: filtersWithOffset.region,
+        limit: filtersWithOffset.limit,
+        offset: filtersWithOffset.offset,
+        tags: ['client']
+      });
       
       console.log('App: loadReviews - calling apiService.getReviews with:', appToUse.id, filtersWithOffset);
       const result = await apiService.getReviews(appToUse.id, filtersWithOffset);
       console.log('App: loadReviews - got result:', result.reviews.length, 'reviews, total:', result.total);
+      logger.log('info', 'reviews.load', {
+        appId: appToUse.id,
+        resultCount: result.reviews.length,
+        total: result.total,
+        durationMs: Date.now() - t0,
+        tags: ['client']
+      });
       
       if (reset) {
         setFilteredReviews(result.reviews);
@@ -102,6 +126,10 @@ function App() {
       console.log('App: loadReviews - state updated, filteredReviews length:', result.reviews.length);
     } catch (err) {
       console.error('App: loadReviews error:', err);
+      logger.log('error', 'reviews.load', {
+        message: err instanceof Error ? err.message : String(err),
+        tags: ['client']
+      });
       setError(err instanceof Error ? err.message : 'Ошибка загрузки отзывов');
     } finally {
       setIsLoading(false);
@@ -113,6 +141,7 @@ function App() {
   // Парсинг новых отзывов при выборе приложения
   const parseReviews = async (app: AppSearchResult) => {
     console.log('App: parseReviews called with app:', app);
+    logger.log('info', 'ui.event', { name: 'Parse.click', appId: app.id, store: app.store, tags: ['client','ui'] });
     
     // 1. Сброс состояния
     setSelectedApp(app);
@@ -129,6 +158,8 @@ function App() {
       // 2. Парсинг
       // 2. Парсинг. Отзывы сохраняются на бэкенде.
       console.log('App: calling apiService.parseReviews...');
+      const t0 = Date.now();
+      logger.log('info', 'parse', { appId: app.id, store: app.store, region: searchRegion, tags: ['client'] });
       const parseResult = await apiService.parseReviews({
         appId: app.id,
         store: app.store,
@@ -138,6 +169,7 @@ function App() {
         region: searchRegion,
       });
       console.log('App: parseReviews result:', parseResult?.length, 'reviews');
+      logger.log('info', 'parse', { appId: app.id, parsedCount: parseResult?.length, durationMs: Date.now() - t0, tags: ['client'] });
       
       // 3. Загрузка и отображение с дефолтными фильтрами
       console.log('App: loading reviews with region filter...');
@@ -145,6 +177,7 @@ function App() {
       console.log('App: reviews loaded successfully');
     } catch (err) {
       console.error('App: parseReviews error:', err);
+      logger.log('error', 'parse', { appId: app.id, message: err instanceof Error ? err.message : String(err), tags: ['client'] });
       setError(err instanceof Error ? err.message : 'Ошибка парсинга отзывов');
       setFilteredReviews([]); // Очищаем отзывы в случае ошибки парсинга
       setTotalReviews(0);
@@ -164,6 +197,7 @@ function App() {
   );
 
   const applyFilters = (newFilters: FilterOptions) => {
+    logger.log('info', 'ui.event', { name: 'Filters.apply', newFilters: { ...newFilters, startDate: !!newFilters.startDate, endDate: !!newFilters.endDate }, tags: ['client','ui'] });
     setFilters(newFilters);
     debouncedLoadReviews(newFilters);
   };
@@ -179,6 +213,7 @@ function App() {
   const loadMoreReviews = async () => {
     if (isLoadingMore || !hasMoreReviews) return;
     
+    logger.log('info', 'ui.event', { name: 'LoadMore.click', tags: ['client','ui'] });
     setIsLoadingMore(true);
     await loadReviews(filters, false);
   };
@@ -189,7 +224,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-50">
         <ServerStatus isWaking={isServerWaking} />
-        <Header />
+        <Header onOpenLogs={() => setShowLogs(true)} />
         
         <main className="container mx-auto px-4 py-8 max-w-7xl">
           <Routes>
@@ -376,6 +411,14 @@ function App() {
             selectedApp={selectedApp}
             filters={filters}
             totalReviews={totalReviews}
+          />
+        )}
+
+        {/* Модальное окно логов */}
+        {showLogs && (
+          <LogsModal
+            isOpen={showLogs}
+            onClose={() => setShowLogs(false)}
           />
         )}
       </div>
