@@ -3,15 +3,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Копируем package files
+# Копируем все package.json файлы для правильной установки workspaces
 COPY package*.json ./
 COPY packages/api/package*.json ./packages/api/
+COPY client/package*.json ./client/
 
-# Устанавливаем зависимости - используем npm install с явным кэшем
-RUN npm install --legacy-peer-deps --cache /tmp/.npm
+# Устанавливаем зависимости - npm автоматически установит workspace dependencies
+RUN npm install --legacy-peer-deps
 
-# Копируем исходники
-COPY . .
+# Копируем исходники API
+COPY packages/api ./packages/api
 
 # Собираем API
 RUN npm run build:api
