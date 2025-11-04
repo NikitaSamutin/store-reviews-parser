@@ -74,3 +74,4 @@
 - 2025-11-04 19:45 — Root Directory установлен в `packages/api` (без слэша). Railway запускает новый деплой; контрольные запросы `/api/health` ожидают готовности.
 - 2025-11-04 20:39 — Ошибка "Dockerfile does not exist": Railway искал Dockerfile в корне. Добавлена явная конфигурация в `packages/api/railway.json`: `builder: DOCKERFILE`, `dockerfilePath: packages/api/Dockerfile`.
 - 2025-11-04 20:45 — Ошибка "Missing serverless-http from lock file": рассинхрон package.json ↔ package-lock.json. Обновлён Dockerfile (npm ci → npm install), синхронизирован lock-файл, изменения запушены в main. Ожидается автодеплой Railway.
+- 2025-11-04 20:56 — Ошибка "Cannot find module 'axios'": в builder stage `npm install --omit=optional` пропускал production dependencies. Исправлено: убран `--omit=optional` из builder, оставлен только в runtime. Изменения запушены, ожидается новый деплой.
