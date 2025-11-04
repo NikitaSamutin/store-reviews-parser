@@ -1,9 +1,8 @@
 # Netlify configuration for full-stack app (Frontend + API via Functions)
 [build]
-  base = "client"
-  publish = "dist"
-  command = "cd .. && npm ci && npm run build:api && cd client && npm ci && npm run build"
-  functions = "../netlify/functions"
+  publish = "client/dist"
+  command = "npm ci && npm run build:api && cd client && npm ci && npm run build"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
