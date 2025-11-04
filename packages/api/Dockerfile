@@ -1,30 +1,39 @@
-# Use Node.js 18 LTS
-FROM node:18-alpine
-
-# Set working directory
+# ---- Builder stage ----
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files
+# Install all deps for build but skip optional (e.g., sqlite3)
 COPY package*.json ./
+RUN npm ci --omit=optional
 
-# Install dependencies
-RUN npm install --only=production
-
-# Copy source code
-COPY . .
+# Copy sources and tsconfig
+COPY tsconfig.json ./
+COPY src ./src
 
 # Build TypeScript
 RUN npm run build
 
-# Create data directory for SQLite (if needed)
-RUN mkdir -p data exports
+# ---- Runtime stage ----
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Install only production deps (omit optional like sqlite3 to avoid build issues on Alpine)
+COPY package*.json ./
+RUN npm ci --omit=dev --omit=optional
+
+# Copy built files
+COPY --from=builder /app/dist ./dist
+
+# Prepare data dir (optional)
+RUN mkdir -p /app/data
 
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Healthcheck via node fetch (no curl dependency)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+  CMD node -e "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]

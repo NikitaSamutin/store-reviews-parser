@@ -1,24 +1,15 @@
+# Netlify configuration for frontend only (API is on Railway)
 [build]
-  publish = "client/dist"
-  # Сборка монорепо: сначала API (для серверлесс-функции), затем фронтенд
-  command = "npm ci && npm run build -w store-reviews-parser-server && npm run build -w client"
+  base = "client"
+  publish = "dist"
+  command = "npm ci && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
+  # API URL will be set in Netlify UI as environment variable
+  # VITE_API_URL = "https://store-reviews-api-production.up.railway.app/api"
 
-# Настройка функций Netlify
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-  # Указываем runtime Node.js 20 для Functions
-  [functions.api]
-    node_bundler = "esbuild"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-
+# SPA redirect - all routes go to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
