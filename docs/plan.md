@@ -63,3 +63,14 @@
 - 2025-11-04 12:38 — Деплой в статусе `ready`, health-check и search проходят по `/.netlify/functions/api`, smoke-тест `scripts/smoke.mjs` → `SMOKE OK`.
 - 2025-11-04 13:00 — Обнаружена проблема: Netlify Functions имеет таймаут 10 секунд, парсинг не работает. Принято решение мигрировать на Render.com (бесплатный tier, нет таймаутов).
 - 2025-11-04 13:05 — Создан `render.yaml`, обновлён клиент с keep-alive пингом и умным лоадером для холодного старта. Изменения запушены в GitHub. Готов к деплою на Render через Blueprint.
+- 2025-11-04 14:45 — Пересмотрена стратегия: вместо Render выбрано Railway для API (Docker + Nixpacks). Подготовлен многоэтапный Dockerfile, `railway.json`, проверена локальная сборка/health-check, изменения запушены.
+- 2025-11-04 15:10 — Решено разделить окружения: API остаётся на Railway, фронтенд переносится на Netlify. Обновлены `netlify.toml`, `.env.production`, GitHub Actions, проведены локальные сборки client/api, изменения запушены в `main`.
+- 2025-11-04 15:25 — Railway: сервис `store-reviews-api` ожидает настройки домена фронтенда и redeployа. Netlify: требуется импорт репозитория, установка `VITE_API_URL`, запуск первого деплоя (в работе).
+- 2025-11-04 18:50 — ✅ Шаг 3.1: Фронтенд успешно развернут на Netlify (https://exquisite-liger-84d6c3.netlify.app), `VITE_API_URL` настроен на Railway API.
+- 2025-11-04 18:52 — ✅ Шаг 3.2: В Railway настроен `ALLOWED_ORIGINS=https://exquisite-liger-84d6c3.netlify.app`, удален дублирующий сервис `store-reviews-frontend`.
+- 2025-11-04 18:57 — Обнаружена ошибка в `railway.json`: устаревший параметр `build.builder: "DOCKER"`. Исправлено: убрана секция build (Railway автоопределяет Dockerfile), изменения запушены в main. Ожидается автодеплой на Railway.
+- 2025-11-04 19:10 — Railway: выявлена несовместимость с `copy packages/api` при сборке из корня. Переключаемся на отдельный Dockerfile в `packages/api`, конфигурируем Root Directory.
+- 2025-11-04 19:35 — Удалён корневой `Dockerfile`, чтобы Railway однозначно использовал `packages/api/Dockerfile`; обновлён healthcheck на динамический `PORT`. Ожидается redeploy сервиса.
+- 2025-11-04 19:45 — Root Directory установлен в `packages/api` (без слэша). Railway запускает новый деплой; контрольные запросы `/api/health` ожидают готовности.
+- 2025-11-04 20:39 — Ошибка "Dockerfile does not exist": Railway искал Dockerfile в корне. Добавлена явная конфигурация в `packages/api/railway.json`: `builder: DOCKERFILE`, `dockerfilePath: packages/api/Dockerfile`.
+- 2025-11-04 20:45 — Ошибка "Missing serverless-http from lock file": рассинхрон package.json ↔ package-lock.json. Обновлён Dockerfile (npm ci → npm install), синхронизирован lock-файл, изменения запушены в main. Ожидается автодеплой Railway.
