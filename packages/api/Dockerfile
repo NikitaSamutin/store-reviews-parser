@@ -2,9 +2,16 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Cache busting - force rebuild when this changes
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
+
 # Install all deps for build (including devDependencies for TypeScript)
 COPY package*.json ./
-RUN npm install
+RUN rm -rf node_modules package-lock.json && npm install && \
+    echo "===== Checking axios installation =====" && \
+    ls -la node_modules | grep axios && \
+    npm list axios
 
 # Copy sources and tsconfig
 COPY tsconfig.json ./
