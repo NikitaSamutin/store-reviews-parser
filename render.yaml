@@ -5,8 +5,8 @@ services:
     runtime: node
     region: frankfurt # EU регион (ближе к России)
     plan: free
-    buildCommand: npm ci && cd packages/api && npm install && npm run build
-    startCommand: cd packages/api && npm start
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
