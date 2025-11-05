@@ -37,7 +37,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   const netlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
   const bp = netlify ? '/.netlify/functions/api' : '/api';
   res.setHeader('X-Base-Path', bp);
-  const runtime = netlify ? 'netlify-functions' : (process.env.RENDER ? 'render' : 'local');
+  const runtime = netlify ? 'netlify-functions' : 'local';
   res.setHeader('X-Runtime', runtime);
   const debug = (process.env.DEBUG === '1' || process.env.DEBUG === 'true' || req.headers['x-debug'] === '1');
   if (debug) {
@@ -87,7 +87,7 @@ if (!fs.existsSync(dataDir)) {
 
 // API Routes
 // Если приложение запущено в окружении Netlify, API-маршруты доступны в корне.
-// В локальной среде и на Render они доступны по префиксу /api.
+// В локальной среде они доступны по префиксу /api.
 // Это необходимо для корректной работы прокси в Vite.
 const basePath = isNetlify ? '/.netlify/functions/api' : '/api';
 app.use(basePath, apiRoutes);
@@ -98,7 +98,7 @@ app.get(`${basePath}/health`, (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     version: '1.0.2',
-    runtime: isNetlify ? 'netlify-functions' : process.env.RENDER ? 'render' : 'local'
+    runtime: isNetlify ? 'netlify-functions' : 'local'
   });
 });
 

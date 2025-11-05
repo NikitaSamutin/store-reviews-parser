@@ -16,7 +16,7 @@ const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 300000, // 5 минут для долгого парсинга на Render
+  timeout: 300000, // 5 минут для долгого парсинга
   headers: {
     'Content-Type': 'application/json',
   },

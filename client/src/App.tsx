@@ -34,7 +34,7 @@ function App() {
   const [isServerWaking, setIsServerWaking] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
 
-  // Keep-alive пинг для Render.com (предотвращает засыпание сервера)
+  // Keep-alive пинг для API (предотвращает засыпание сервера)
   useEffect(() => {
     // Boot log
     logger.log('info', 'boot', {
@@ -63,7 +63,7 @@ function App() {
 
     checkApiHealth();
 
-    // Пингуем сервер каждые 12 минут, чтобы он не заснул (Render засыпает через 15 мин)
+    // Пингуем сервер каждые 12 минут, чтобы он не заснул
     const keepAliveInterval = setInterval(() => {
       apiService.healthCheck().catch(() => {
         console.log('Keep-alive ping failed');
@@ -222,7 +222,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <ServerStatus isWaking={isServerWaking} />
         <Header onOpenLogs={() => setShowLogs(true)} />
         
