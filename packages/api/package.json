@@ -2,6 +2,7 @@
   "name": "store-reviews-parser-server",
   "version": "1.0.0",
   "description": "Backend для парсинга отзывов",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",

@@ -1,4 +1,4 @@
-import { Review, AppSearchResult } from '../types';
+import { Review, AppSearchResult } from '../types/index.js';
 
 export class GooglePlayParser {
   private gplay: any = null;

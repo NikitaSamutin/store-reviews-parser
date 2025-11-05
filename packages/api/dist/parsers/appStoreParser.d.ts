@@ -1,4 +1,4 @@
-import { Review, AppSearchResult } from '../types';
+import { Review, AppSearchResult } from '../types/index.js';
 export declare class AppStoreParser {
     private baseUrl;
     searchApps(query: string, region?: string): Promise<AppSearchResult[]>;

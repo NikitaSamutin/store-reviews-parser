@@ -1,22 +1,18 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
 // Назначение файла: конфигурация Express-приложения (middleware, маршруты, обработчики ошибок). Без записи экспортов на диск.
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const helmet_1 = __importDefault(require("helmet"));
-const compression_1 = __importDefault(require("compression"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
-const api_1 = __importDefault(require("./routes/api"));
-const app = (0, express_1.default)();
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import path from 'path';
+import fs from 'fs';
+import { randomUUID } from 'crypto';
+import apiRoutes from './routes/api.js';
+const app = express();
 // Middleware
-app.use((0, helmet_1.default)());
-app.use((0, compression_1.default)());
+app.use(helmet());
+app.use(compression());
 // CORS: в проде разрешаем все источники по умолчанию ('*'), либо список из ALLOWED_ORIGINS
-app.use((0, cors_1.default)({
+app.use(cors({
     origin: (() => {
         if (process.env.NODE_ENV === 'production') {
             if (process.env.ALLOWED_ORIGINS) {
@@ -28,18 +24,55 @@ app.use((0, cors_1.default)({
     })(),
     credentials: true
 }));
-app.use(express_1.default.json({ limit: '10mb' }));
-app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use((req, res, next) => {
+    const start = Date.now();
+    const reqId = req.headers['x-request-id'] || randomUUID();
+    res.setHeader('X-Request-Id', reqId);
+    req.reqId = reqId;
+    const netlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const bp = netlify ? '/' : '/api';
+    res.setHeader('X-Base-Path', bp);
+    const runtime = netlify ? 'netlify-functions' : 'local';
+    res.setHeader('X-Runtime', runtime);
+    const debug = (process.env.DEBUG === '1' || process.env.DEBUG === 'true' || req.headers['x-debug'] === '1');
+    if (debug) {
+        console.log('Request start', {
+            reqId,
+            method: req.method,
+            url: req.originalUrl,
+            query: req.query
+        });
+    }
+    const originalEnd = res.end;
+    res.end = function (...args) {
+        try {
+            const durationMs = Date.now() - start;
+            res.setHeader('X-Response-Time', `${durationMs}ms`);
+            if (debug) {
+                console.log('Request end', {
+                    reqId,
+                    status: res.statusCode,
+                    durationMs
+                });
+            }
+        }
+        catch { }
+        return originalEnd.apply(this, args);
+    };
+    next();
+});
 // Создаём необходимые директории
 // На Netlify функции файловая система только для записи в /tmp
 // AWS_LAMBDA_FUNCTION_NAME присутствует только в Netlify Functions runtime
 const isNetlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-const baseWritableDir = isNetlify ? '/tmp' : path_1.default.join(__dirname, '..');
-const dataDir = path_1.default.join(baseWritableDir, 'data');
+const baseWritableDir = isNetlify ? '/tmp' : path.join(__dirname, '..');
+const dataDir = path.join(baseWritableDir, 'data');
 // В serverless окружении создаём директорию только если её нет
-if (!fs_1.default.existsSync(dataDir)) {
+if (!fs.existsSync(dataDir)) {
     try {
-        fs_1.default.mkdirSync(dataDir, { recursive: true });
+        fs.mkdirSync(dataDir, { recursive: true });
     }
     catch (err) {
         // Игнорируем ошибки создания директории в read-only FS
@@ -47,21 +80,33 @@ if (!fs_1.default.existsSync(dataDir)) {
     }
 }
 // Директория exports больше не нужна — экспорт отдаётся напрямую в ответе
-// API Routes
-// Если приложение запущено в окружении Netlify, API-маршруты доступны в корне.
-// В локальной среде и на Render они доступны по префиксу /api.
-// Это необходимо для корректной работы прокси в Vite.
-const basePath = isNetlify ? '/.netlify/functions/api' : '/api';
-app.use(basePath, api_1.default);
-// Health check
-app.get(`${basePath}/health`, (req, res) => {
-    res.json({
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        version: '1.0.2',
-        runtime: isNetlify ? 'netlify-functions' : process.env.RENDER ? 'render' : 'local'
+// В Netlify Functions serverless-http уже обрезает путь к функции,
+// поэтому Express получает только /health вместо /.netlify/functions/api/health
+// В локальной среде используем префикс /api
+if (isNetlify) {
+    // В Netlify монтируем напрямую без префикса
+    app.get('/health', (req, res) => {
+        res.json({
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            version: '1.0.6',
+            runtime: 'netlify-functions'
+        });
     });
-});
+    app.use('/', apiRoutes);
+}
+else {
+    // В локальной среде используем /api префикс
+    app.get('/api/health', (req, res) => {
+        res.json({
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            version: '1.0.6',
+            runtime: 'local'
+        });
+    });
+    app.use('/api', apiRoutes);
+}
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
@@ -79,5 +124,5 @@ app.use('*', (req, res) => {
         error: 'Маршрут не найден'
     });
 });
-exports.default = app;
+export default app;
 //# sourceMappingURL=app.js.map

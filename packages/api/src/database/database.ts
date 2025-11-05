@@ -1,4 +1,4 @@
-import { Review } from '../types';
+import { Review } from '../types/index.js';
 import path from 'path';
 let sqlite3: any;
 // AWS_LAMBDA_FUNCTION_NAME присутствует только в Netlify Functions runtime

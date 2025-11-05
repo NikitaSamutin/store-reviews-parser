@@ -6,7 +6,7 @@ import compression from 'compression';
 import path from 'path';
 import fs from 'fs';
 import { randomUUID } from 'crypto';
-import apiRoutes from './routes/api';
+import apiRoutes from './routes/api.js';
 
 const app = express();
 
@@ -35,7 +35,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   res.setHeader('X-Request-Id', reqId);
   (req as any).reqId = reqId;
   const netlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-  const bp = netlify ? '/.netlify/functions/api' : '/api';
+  const bp = netlify ? '/' : '/api';
   res.setHeader('X-Base-Path', bp);
   const runtime = netlify ? 'netlify-functions' : 'local';
   res.setHeader('X-Runtime', runtime);
@@ -85,22 +85,33 @@ if (!fs.existsSync(dataDir)) {
 
 // Директория exports больше не нужна — экспорт отдаётся напрямую в ответе
 
-// API Routes
-// Если приложение запущено в окружении Netlify, маршруты доступны без префикса,
-// т.к. редирект /api/* -> /.netlify/functions/api/:splat уже обработан.
-// В локальной среде они доступны по префиксу /api.
-const basePath = isNetlify ? '' : '/api';
-app.use(basePath, apiRoutes);
+// В Netlify Functions serverless-http уже обрезает путь к функции,
+// поэтому Express получает только /health вместо /.netlify/functions/api/health
+// В локальной среде используем префикс /api
 
-// Health check
-app.get(`${basePath}/health`, (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    version: '1.0.2',
-    runtime: isNetlify ? 'netlify-functions' : 'local'
+if (isNetlify) {
+  // В Netlify монтируем напрямую без префикса
+  app.get('/health', (req, res) => {
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      version: '1.0.6',
+      runtime: 'netlify-functions'
+    });
   });
-});
+  app.use('/', apiRoutes);
+} else {
+  // В локальной среде используем /api префикс
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      version: '1.0.6',
+      runtime: 'local'
+    });
+  });
+  app.use('/api', apiRoutes);
+}
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

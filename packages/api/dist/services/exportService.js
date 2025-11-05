@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExportService = void 0;
-class ExportService {
+export class ExportService {
     // Экспорт CSV: формируем данные в памяти, экранируем поля, локализуем дату, нормализуем магазин
     async exportToCSV(reviews, filename) {
         try {
@@ -84,5 +81,4 @@ class ExportService {
         }
     }
 }
-exports.ExportService = ExportService;
 //# sourceMappingURL=exportService.js.map

@@ -12,4 +12,16 @@
   node_bundler = "esbuild"
   external_node_modules = ["serverless-http", "express", "cors", "helmet", "compression", "google-play-scraper", "axios", "csv-writer"]
 
-# Redirects are handled by client/public/_redirects file
+# Redirects - порядок важен!
+# API редирект должен быть первым
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

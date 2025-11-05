@@ -1,14 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReviewService = void 0;
-const googlePlayParser_1 = require("../parsers/googlePlayParser");
-const appStoreParser_1 = require("../parsers/appStoreParser");
-const database_1 = require("../database/database");
-class ReviewService {
+import { GooglePlayParser } from '../parsers/googlePlayParser.js';
+import { AppStoreParser } from '../parsers/appStoreParser.js';
+import { Database } from '../database/database.js';
+export class ReviewService {
     constructor() {
-        this.googleParser = new googlePlayParser_1.GooglePlayParser();
-        this.appStoreParser = new appStoreParser_1.AppStoreParser();
-        this.database = new database_1.Database();
+        this.googleParser = new GooglePlayParser();
+        this.appStoreParser = new AppStoreParser();
+        this.database = new Database();
         // Инициализируем парсеры
         this.googleParser.init().catch(console.error);
     }
@@ -111,5 +108,4 @@ class ReviewService {
         this.database.close();
     }
 }
-exports.ReviewService = ReviewService;
 //# sourceMappingURL=reviewService.js.map

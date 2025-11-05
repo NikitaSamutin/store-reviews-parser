@@ -1,15 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
 // Назначение файла: маршруты API. Экспорт теперь отдаёт файл напрямую (без записи на диск) — удобно для serverless.
-const express_1 = __importDefault(require("express"));
-const reviewService_1 = require("../services/reviewService");
-const exportService_1 = require("../services/exportService");
-const router = express_1.default.Router();
-const reviewService = new reviewService_1.ReviewService();
-const exportService = new exportService_1.ExportService();
+import express from 'express';
+import { ReviewService } from '../services/reviewService.js';
+import { ExportService } from '../services/exportService.js';
+const router = express.Router();
+const reviewService = new ReviewService();
+const exportService = new ExportService();
 // Поиск приложений
 router.get('/search', async (req, res) => {
     try {
@@ -182,5 +177,5 @@ router.get('/regions', async (req, res) => {
         });
     }
 });
-exports.default = router;
+export default router;
 //# sourceMappingURL=api.js.map

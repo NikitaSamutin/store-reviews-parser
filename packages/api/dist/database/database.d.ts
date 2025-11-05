@@ -1,4 +1,4 @@
-import { Review } from '../types';
+import { Review } from '../types/index.js';
 export declare class Database {
     private db;
     private inMemory;

@@ -1,8 +1,8 @@
 // Назначение файла: маршруты API. Экспорт теперь отдаёт файл напрямую (без записи на диск) — удобно для serverless.
 import express from 'express';
-import { ReviewService } from '../services/reviewService';
-import { ExportService } from '../services/exportService';
-import { ApiResponse, FilterOptions } from '../types';
+import { ReviewService } from '../services/reviewService.js';
+import { ExportService } from '../services/exportService.js';
+import { ApiResponse, FilterOptions } from '../types/index.js';
 
 const router = express.Router();
 const reviewService = new ReviewService();

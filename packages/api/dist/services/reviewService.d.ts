@@ -1,4 +1,4 @@
-import { Review, AppSearchResult, FilterOptions, ParseOptions } from '../types';
+import { Review, AppSearchResult, FilterOptions, ParseOptions } from '../types/index.js';
 export declare class ReviewService {
     private googleParser;
     private appStoreParser;

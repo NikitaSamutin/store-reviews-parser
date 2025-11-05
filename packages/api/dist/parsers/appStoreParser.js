@@ -1,17 +1,11 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppStoreParser = void 0;
-const axios_1 = __importDefault(require("axios"));
-class AppStoreParser {
+import axios from 'axios';
+export class AppStoreParser {
     constructor() {
         this.baseUrl = 'https://itunes.apple.com';
     }
     async searchApps(query, region = 'ru') {
         try {
-            const response = await axios_1.default.get(`${this.baseUrl}/search`, {
+            const response = await axios.get(`${this.baseUrl}/search`, {
                 params: {
                     term: query,
                     country: region,
@@ -37,7 +31,7 @@ class AppStoreParser {
         try {
             // 1. Получаем информацию о приложении (один раз)
             const lookupCountry = region || 'us';
-            const appResponse = await axios_1.default.get(`${this.baseUrl}/lookup`, {
+            const appResponse = await axios.get(`${this.baseUrl}/lookup`, {
                 params: { id: appId, country: lookupCountry },
             });
             const appInfo = appResponse.data.results[0];
@@ -54,7 +48,7 @@ class AppStoreParser {
                 // App Store RSS feed отдает до 10 страниц
                 for (let page = 1; page <= 10; page++) {
                     const url = `${this.baseUrl}/${region}/rss/customerreviews/page=${page}/id=${appId}/sortby=mostrecent/json`;
-                    pagePromises.push(axios_1.default.get(url).catch(() => null)); // Игнорируем ошибки отдельных запросов
+                    pagePromises.push(axios.get(url).catch(() => null)); // Игнорируем ошибки отдельных запросов
                 }
                 const responses = await Promise.allSettled(pagePromises);
                 for (const response of responses) {
@@ -110,5 +104,4 @@ class AppStoreParser {
         ];
     }
 }
-exports.AppStoreParser = AppStoreParser;
 //# sourceMappingURL=appStoreParser.js.map

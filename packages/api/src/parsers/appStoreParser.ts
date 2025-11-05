@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Review, AppSearchResult } from '../types';
+import { Review, AppSearchResult } from '../types/index.js';
 
 export class AppStoreParser {
   private baseUrl = 'https://itunes.apple.com';

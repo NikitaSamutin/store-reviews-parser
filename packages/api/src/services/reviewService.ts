@@ -1,7 +1,7 @@
-import { GooglePlayParser } from '../parsers/googlePlayParser';
-import { AppStoreParser } from '../parsers/appStoreParser';
-import { Database } from '../database/database';
-import { Review, AppSearchResult, FilterOptions, ParseOptions } from '../types';
+import { GooglePlayParser } from '../parsers/googlePlayParser.js';
+import { AppStoreParser } from '../parsers/appStoreParser.js';
+import { Database } from '../database/database.js';
+import { Review, AppSearchResult, FilterOptions, ParseOptions } from '../types/index.js';
 
 export class ReviewService {
   private googleParser: GooglePlayParser;

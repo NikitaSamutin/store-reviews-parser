@@ -1,10 +1,4 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Database = void 0;
-const path_1 = __importDefault(require("path"));
+import path from 'path';
 let sqlite3;
 // AWS_LAMBDA_FUNCTION_NAME присутствует только в Netlify Functions runtime
 const isNetlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
@@ -17,7 +11,7 @@ try {
 catch (e) {
     sqlite3 = null;
 }
-class Database {
+export class Database {
     constructor() {
         this.memReviews = [];
         this.inMemory = isNetlify || !sqlite3;
@@ -26,8 +20,8 @@ class Database {
             this.db = null;
             return;
         }
-        const baseDir = isNetlify ? '/tmp' : path_1.default.join(__dirname, '..', '..');
-        const dbPath = path_1.default.join(baseDir, 'data', 'reviews.db');
+        const baseDir = isNetlify ? '/tmp' : path.join(__dirname, '..', '..');
+        const dbPath = path.join(baseDir, 'data', 'reviews.db');
         this.db = new sqlite3.Database(dbPath);
         this.initTables();
     }
@@ -240,5 +234,4 @@ class Database {
         this.db.close();
     }
 }
-exports.Database = Database;
 //# sourceMappingURL=database.js.map

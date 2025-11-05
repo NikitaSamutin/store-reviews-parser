@@ -1,5 +1,6 @@
-import { Review, AppSearchResult } from '../types';
+import { Review, AppSearchResult } from '../types/index.js';
 export declare class GooglePlayParser {
+    private gplay;
     private regionToLang;
     init(): Promise<void>;
     searchApps(query: string, region?: string): Promise<AppSearchResult[]>;
