@@ -1,16 +1,11 @@
 import { Review } from '../types/index.js';
 import path from 'path';
-let sqlite3: any;
+
 // AWS_LAMBDA_FUNCTION_NAME присутствует только в Netlify Functions runtime
 const isNetlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-try {
-  if (!isNetlify) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    sqlite3 = require('sqlite3');
-  }
-} catch (e) {
-  sqlite3 = null;
-}
+
+// Динамический импорт sqlite3 только для локальной среды
+let sqlite3: any = null;
 
 export class Database {
   private db: any;
