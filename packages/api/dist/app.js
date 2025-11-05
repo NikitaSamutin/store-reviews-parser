@@ -36,6 +36,18 @@ app.use((req, res, next) => {
     res.setHeader('X-Base-Path', bp);
     const runtime = netlify ? 'netlify-functions' : 'local';
     res.setHeader('X-Runtime', runtime);
+    // Всегда логируем в Netlify для отладки
+    if (netlify) {
+        console.log('Netlify request:', {
+            reqId,
+            method: req.method,
+            url: req.url,
+            originalUrl: req.originalUrl,
+            baseUrl: req.baseUrl,
+            path: req.path,
+            headers: req.headers
+        });
+    }
     const debug = (process.env.DEBUG === '1' || process.env.DEBUG === 'true' || req.headers['x-debug'] === '1');
     if (debug) {
         console.log('Request start', {
