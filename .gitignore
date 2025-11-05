@@ -22,6 +22,7 @@ server/.env
 # Local data/exports
 server/data/
 server/exports/
+packages/api/data/
 
 # IDE
 .vscode/
@@ -29,6 +30,12 @@ server/exports/
 
 # Misc
 *.local
+DEBUG_PLAN.md
+DEPLOY_STATUS.md
+SOLUTION.md
+scripts/diagnose.mjs
+docs/plan.md
+windsurf_deployment.yaml
 
 # Local Netlify folder
 .netlify

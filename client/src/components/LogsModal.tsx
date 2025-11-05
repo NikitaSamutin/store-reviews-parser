@@ -99,6 +99,13 @@ export const LogsModal: React.FC<LogsModalProps> = ({ isOpen, onClose }) => {
                 placeholder="Поиск (event, level, reqId, текст)"
                 className="input input-bordered input-sm w-64"
               />
+              <button 
+                onClick={() => handleCopy(filtered, 'all')} 
+                className="btn btn-outline btn-sm"
+                title="Скопировать все логи"
+              >
+                {copied === 'all' ? '✓ Скопировано!' : 'Скопировать все'}
+              </button>
               <button onClick={() => { logger.clear(); setSelected(null); }} className="btn btn-outline btn-sm">Очистить</button>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
             </div>
