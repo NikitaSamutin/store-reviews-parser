@@ -2,7 +2,7 @@
 [build]
   base = "."
   publish = "client/dist"
-  command = "npm ci && npm run build:api && cd netlify/functions && npm ci && cd ../.. && npm run build -w client"
+  command = "ROOT=\$(git rev-parse --show-toplevel) && cd \"\$ROOT\" && npm ci && npm run build:api && (cd netlify/functions && npm ci) && npm run build -w client"
   functions = "netlify/functions"
 
 [build.environment]
