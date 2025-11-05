@@ -25,6 +25,7 @@ export const LogsModal: React.FC<LogsModalProps> = ({ isOpen, onClose }) => {
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<LogEntry | null>(null);
   const [debug, setDebug] = useState<boolean>(logger.getDebug());
+  const [copied, setCopied] = useState<'selected' | 'all' | null>(null);
 
   useEffect(() => {
     const unsub = logger.subscribe(() => setLogs(logger.getAll()));
@@ -45,6 +46,32 @@ export const LogsModal: React.FC<LogsModalProps> = ({ isOpen, onClose }) => {
       })
       .reverse();
   }, [logs, filter]);
+
+  const handleCopy = async (data: any, type: 'selected' | 'all') => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+      setCopied(type);
+      setTimeout(() => setCopied(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = JSON.stringify(data, null, 2);
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(type);
+        setTimeout(() => setCopied(null), 2000);
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+        alert('Не удалось скопировать. Попробуйте вручную.');
+      }
+      document.body.removeChild(textarea);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -124,13 +151,17 @@ export const LogsModal: React.FC<LogsModalProps> = ({ isOpen, onClose }) => {
                   <pre className="text-xs bg-white border rounded p-2 overflow-auto max-h-80">{JSON.stringify(selected, null, 2)}</pre>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => navigator.clipboard.writeText(JSON.stringify(selected, null, 2))}
+                      onClick={() => handleCopy(selected, 'selected')}
                       className="btn btn-outline btn-sm"
-                    >Скопировать</button>
+                    >
+                      {copied === 'selected' ? '✓ Скопировано!' : 'Скопировать'}
+                    </button>
                     <button
-                      onClick={() => navigator.clipboard.writeText(JSON.stringify(filtered, null, 2))}
+                      onClick={() => handleCopy(filtered, 'all')}
                       className="btn btn-outline btn-sm"
-                    >Скопировать все</button>
+                    >
+                      {copied === 'all' ? '✓ Скопировано!' : 'Скопировать все'}
+                    </button>
                   </div>
                 </div>
               )}
