@@ -95,13 +95,33 @@ if (!fs.existsSync(dataDir)) {
 // В Netlify Functions serverless-http уже обрезает путь к функции,
 // поэтому Express получает только /health вместо /.netlify/functions/api/health
 // В локальной среде используем префикс /api
+// Debug endpoint - показывает что именно получает Express
+app.all('*', (req, res, next) => {
+    if (req.path === '/debug-request' || req.path === '/.netlify/functions/api/debug-request') {
+        return res.json({
+            path: req.path,
+            url: req.url,
+            originalUrl: req.originalUrl,
+            baseUrl: req.baseUrl,
+            method: req.method,
+            headers: req.headers,
+            query: req.query,
+            isNetlify,
+            env: {
+                NETLIFY: process.env.NETLIFY,
+                AWS_LAMBDA_FUNCTION_NAME: process.env.AWS_LAMBDA_FUNCTION_NAME
+            }
+        });
+    }
+    next();
+});
 if (isNetlify) {
     // В Netlify монтируем напрямую без префикса
     app.get('/health', (req, res) => {
         res.json({
             status: 'OK',
             timestamp: new Date().toISOString(),
-            version: '1.0.6',
+            version: '1.0.7',
             runtime: 'netlify-functions'
         });
     });
@@ -113,7 +133,7 @@ else {
         res.json({
             status: 'OK',
             timestamp: new Date().toISOString(),
-            version: '1.0.6',
+            version: '1.0.7',
             runtime: 'local'
         });
     });
