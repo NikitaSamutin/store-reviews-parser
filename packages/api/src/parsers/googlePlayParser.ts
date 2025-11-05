@@ -1,7 +1,8 @@
 import { Review, AppSearchResult } from '../types';
-const gplay = require('google-play-scraper');
 
 export class GooglePlayParser {
+  private gplay: any = null;
+
   private regionToLang(region?: string): string {
     if (!region) return 'en';
     const map: Record<string, string> = {
@@ -29,12 +30,15 @@ export class GooglePlayParser {
     return map[region] || 'en';
   }
   async init(): Promise<void> {
-    // Инициализация не требуется для упрощенной версии
+    if (!this.gplay) {
+      this.gplay = await import('google-play-scraper');
+    }
   }
 
   async searchApps(query: string, region: string = 'us'): Promise<AppSearchResult[]> {
+    await this.init();
     try {
-      const results = await gplay.default.search({
+      const results = await this.gplay.default.search({
         term: query,
         num: 10,
         country: region,
@@ -55,8 +59,9 @@ export class GooglePlayParser {
   }
 
   async parseReviews(appId: string, region?: string): Promise<Review[]> {
+    await this.init();
     try {
-      const app = await gplay.default.app({ appId, country: region, lang: this.regionToLang(region) });
+      const app = await this.gplay.default.app({ appId, country: region, lang: this.regionToLang(region) });
       const appName = app.title;
 
       const regions = region ? [region] : this.getAvailableRegions();
@@ -71,11 +76,11 @@ export class GooglePlayParser {
 
         try {
           do {
-            const response = await gplay.default.reviews({
+            const response = await this.gplay.default.reviews({
               appId: appId,
               country: region,
               lang: this.regionToLang(region),
-              sort: gplay.default.sort.NEWEST,
+              sort: this.gplay.default.sort.NEWEST,
               num: 200, // Максимум за один запрос
               paginate: true,
               nextPaginationToken: nextToken,
