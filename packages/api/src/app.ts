@@ -86,10 +86,10 @@ if (!fs.existsSync(dataDir)) {
 // Директория exports больше не нужна — экспорт отдаётся напрямую в ответе
 
 // API Routes
-// Если приложение запущено в окружении Netlify, API-маршруты доступны в корне.
+// Если приложение запущено в окружении Netlify, маршруты доступны без префикса,
+// т.к. редирект /api/* -> /.netlify/functions/api/:splat уже обработан.
 // В локальной среде они доступны по префиксу /api.
-// Это необходимо для корректной работы прокси в Vite.
-const basePath = isNetlify ? '/.netlify/functions/api' : '/api';
+const basePath = isNetlify ? '' : '/api';
 app.use(basePath, apiRoutes);
 
 // Health check
