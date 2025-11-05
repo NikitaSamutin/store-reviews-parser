@@ -35,7 +35,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   res.setHeader('X-Request-Id', reqId);
   (req as any).reqId = reqId;
   const netlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-  const bp = netlify ? '/' : '/api';
+  const bp = netlify ? '/.netlify/functions/api' : '/api';
   res.setHeader('X-Base-Path', bp);
   const runtime = netlify ? 'netlify-functions' : 'local';
   res.setHeader('X-Runtime', runtime);
@@ -103,50 +103,22 @@ if (!fs.existsSync(dataDir)) {
 // поэтому Express получает только /health вместо /.netlify/functions/api/health
 // В локальной среде используем префикс /api
 
-// Debug endpoint - показывает что именно получает Express
-app.all('*', (req, res, next) => {
-  if (req.path === '/debug-request' || req.path === '/.netlify/functions/api/debug-request') {
-    return res.json({
-      path: req.path,
-      url: req.url,
-      originalUrl: req.originalUrl,
-      baseUrl: req.baseUrl,
-      method: req.method,
-      headers: req.headers,
-      query: req.query,
-      isNetlify,
-      env: {
-        NETLIFY: process.env.NETLIFY,
-        AWS_LAMBDA_FUNCTION_NAME: process.env.AWS_LAMBDA_FUNCTION_NAME
-      }
-    });
-  }
-  next();
+// В Netlify Functions serverless-http НЕ обрезает путь функции
+// Express получает ПОЛНЫЙ путь включая /.netlify/functions/api
+const basePath = isNetlify ? '/.netlify/functions/api' : '/api';
+
+// Health check
+app.get(`${basePath}/health`, (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    version: '1.0.8',
+    runtime: isNetlify ? 'netlify-functions' : 'local'
+  });
 });
 
-if (isNetlify) {
-  // В Netlify монтируем напрямую без префикса
-  app.get('/health', (req, res) => {
-    res.json({
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      version: '1.0.7',
-      runtime: 'netlify-functions'
-    });
-  });
-  app.use('/', apiRoutes);
-} else {
-  // В локальной среде используем /api префикс
-  app.get('/api/health', (req, res) => {
-    res.json({
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      version: '1.0.7',
-      runtime: 'local'
-    });
-  });
-  app.use('/api', apiRoutes);
-}
+// API Routes
+app.use(basePath, apiRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
