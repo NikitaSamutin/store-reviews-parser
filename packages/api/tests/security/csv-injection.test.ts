@@ -28,58 +28,52 @@ describe('CSV Export Security - P2', () => {
 
   describe('Formula injection prevention', () => {
     it('should neutralize values starting with =', async () => {
-      // FAILING TEST: Сейчас = проходит без изменений
       const review = createReview('=HYPERLINK("http://evil.com","Click me")');
       const result = await exportService.exportToCSV([review]);
       
-      // Не должно начинаться с = (можно добавить ' или пробел)
-      expect(result.content).not.toContain(';=HYPERLINK');
-      expect(result.content).not.toContain('";=HYPERLINK');
+      // Должно содержать '= вместо просто =
+      expect(result.content).toContain("'=HYPERLINK");
     });
 
     it('should neutralize values starting with +', async () => {
-      // FAILING TEST
       const review = createReview('+cmd|calc');
       const result = await exportService.exportToCSV([review]);
       
-      expect(result.content).not.toMatch(/[;"]?\+cmd/);
+      // Должно содержать '+ вместо просто +
+      expect(result.content).toContain("'+cmd");
     });
 
     it('should neutralize values starting with -', async () => {
-      // FAILING TEST
       const review = createReview('-1+1');
       const result = await exportService.exportToCSV([review]);
       
-      // Должно быть нейтрализовано (например, '-1+1 или пробел перед -)
-      const lines = result.content.split('\n');
-      const dataLine = lines[1]; // Первая строка данных
-      
-      // Проверяем что - не интерпретируется как формула
-      expect(dataLine).toMatch(/[';].*-1\+1/);
+      // Должно быть нейтрализовано добавлением ' в начало
+      // Проверяем что содержимое начинается с '
+      expect(result.content).toContain("'-1+1");
     });
 
     it('should neutralize values starting with @', async () => {
-      // FAILING TEST
       const review = createReview('@SUM(A1:A10)');
       const result = await exportService.exportToCSV([review]);
       
-      expect(result.content).not.toContain(';@SUM');
+      // Должно содержать '@ вместо просто @
+      expect(result.content).toContain("'@SUM");
     });
 
     it('should neutralize values starting with tab character', async () => {
-      // FAILING TEST
       const review = createReview('\t=cmd|calc');
       const result = await exportService.exportToCSV([review]);
       
-      expect(result.content).not.toContain('\t=cmd');
+      // Tab в начале должен быть нейтрализован
+      expect(result.content).toContain("'\t=cmd");
     });
 
     it('should neutralize values starting with carriage return', async () => {
-      // FAILING TEST
       const review = createReview('\r=cmd|calc');
       const result = await exportService.exportToCSV([review]);
       
-      expect(result.content).not.toContain('\r=cmd');
+      // CR в начале должен быть нейтрализован
+      expect(result.content).toContain("'\r=cmd");
     });
   });
 
@@ -129,7 +123,8 @@ describe('CSV Export Security - P2', () => {
       
       const result = await exportService.exportToCSV([review]);
       
-      expect(result.content).not.toMatch(/[;"]?=cmd\|calc/);
+      // Автор должен быть нейтрализован
+      expect(result.content).toContain("'=cmd");
     });
   });
 });

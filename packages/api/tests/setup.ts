@@ -1,5 +1,8 @@
 // Global test setup
-import { beforeAll, afterAll, afterEach } from 'vitest';
+import { beforeAll, afterAll, afterEach, vi } from 'vitest';
+
+// Force in-memory mode for tests (don't load sqlite3)
+process.env.FORCE_IN_MEMORY = '1';
 
 // Suppress console output during tests unless DEBUG is set
 if (!process.env.DEBUG) {

@@ -8,6 +8,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import apiRoutes from './routes/api.js';
+import { globalLimiter } from './middleware/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,7 @@ const app = express();
 // Middleware
 app.use(helmet());
 app.use(compression());
+app.use(globalLimiter); // Глобальный rate-limit
 // CORS: в проде разрешаем список из ALLOWED_ORIGINS, иначе localhost для разработки
 app.use(cors({
   origin: (() => {

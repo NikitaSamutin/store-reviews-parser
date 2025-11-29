@@ -5,8 +5,31 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Максимальное количество отзывов в in-memory хранилище
+const MAX_IN_MEMORY_REVIEWS = 10000;
+
 // Динамический импорт sqlite3
 let sqlite3: any = null;
+
+// Попытка загрузить sqlite3
+const initSqlite = async () => {
+  // Для тестов можно форсировать in-memory режим
+  if (process.env.FORCE_IN_MEMORY === '1') {
+    console.log('Forced in-memory mode');
+    return;
+  }
+  
+  try {
+    const module = await import('sqlite3');
+    sqlite3 = module.default;
+    console.log('SQLite3 loaded successfully');
+  } catch (err) {
+    console.warn('SQLite3 not available, using in-memory storage');
+  }
+};
+
+// Инициализируем при загрузке модуля
+initSqlite();
 
 export class Database {
   private db: any;
@@ -76,7 +99,18 @@ export class Database {
       for (const r of reviews) {
         map.set(key(r), r);
       }
-      this.memReviews = Array.from(map.values());
+      
+      // Преобразуем в массив и сортируем по дате (новые первые)
+      let allReviews = Array.from(map.values());
+      allReviews.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      // Ограничиваем размер хранилища, удаляя старые отзывы
+      if (allReviews.length > MAX_IN_MEMORY_REVIEWS) {
+        allReviews = allReviews.slice(0, MAX_IN_MEMORY_REVIEWS);
+        console.warn(`In-memory storage limited to ${MAX_IN_MEMORY_REVIEWS} reviews, oldest removed`);
+      }
+      
+      this.memReviews = allReviews;
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => {

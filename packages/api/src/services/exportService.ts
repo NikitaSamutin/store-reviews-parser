@@ -30,9 +30,18 @@ export class ExportService {
         'Полезность',
       ];
 
-      // Хелпер экранирования для CSV
+      // Хелпер экранирования для CSV с защитой от formula injection
       const escapeCsv = (value: unknown): string => {
-        const str = value === null || value === undefined ? '' : String(value);
+        let str = value === null || value === undefined ? '' : String(value);
+        
+        // Защита от CSV formula injection (Excel/Sheets)
+        // Нейтрализуем значения начинающиеся с опасных символов
+        const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
+        if (str.length > 0 && dangerousChars.includes(str[0])) {
+          // Добавляем одинарную кавычку в начало — Excel покажет её как текст
+          str = "'" + str;
+        }
+        
         // Экранируем двойные кавычки и оборачиваем в кавычки, если встречаются разделители/переводы строк
         const needsQuotes = /[",\n;]/.test(str);
         const escaped = str.replace(/"/g, '""');

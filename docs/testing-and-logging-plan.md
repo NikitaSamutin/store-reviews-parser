@@ -219,15 +219,20 @@ describe('POST /api/export', () => {
 
 ## Порядок внедрения
 
-### Этап 1: Настройка инфраструктуры
-- [ ] Установить vitest, supertest, msw
-- [ ] Создать vitest.config.ts
-- [ ] Создать tests/setup.ts
-- [ ] Добавить npm scripts: `test`, `test:watch`, `test:coverage`
+### Этап 1: Настройка инфраструктуры ✅
+- [x] Установить vitest, supertest
+- [x] Создать vitest.config.ts
+- [x] Создать tests/setup.ts
+- [x] Добавить npm scripts: `test`, `test:watch`, `test:coverage`
 
-### Этап 2: Написать failing-тесты для P0
-- [ ] database.test.ts — тесты на SQLite и лимиты
-- [ ] ratelimit.test.ts — тесты на rate-limiting
+### Этап 2: Написать failing-тесты для P0 ✅
+- [x] database.test.ts — тесты на SQLite и лимиты
+- [x] ratelimit.test.ts — тесты на rate-limiting
+- [x] validation.test.ts — тесты на валидацию
+- [x] csv-injection.test.ts — тесты на CSV-инъекции
+- [x] api.health.test.ts — интеграционные тесты
+
+**Текущий статус:** 20 passed, 23 failed (ожидаемо)
 
 ### Этап 3: Исправить P0, проверить тестами
 - [ ] Исправить загрузку SQLite
