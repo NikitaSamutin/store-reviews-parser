@@ -4,6 +4,7 @@ import { ReviewService } from '../services/reviewService.js';
 import { ExportService } from '../services/exportService.js';
 import { ApiResponse, FilterOptions } from '../types/index.js';
 import { parseLimiter, exportLimiter, searchLimiter } from '../middleware/rateLimiter.js';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 const reviewService = new ReviewService();
@@ -54,7 +55,7 @@ router.get('/search', searchLimiter, async (req, res) => {
       data: apps
     } as ApiResponse<typeof apps>);
   } catch (error) {
-    console.error('Ошибка поиска:', error);
+    logger.logError('Ошибка поиска', error, (req as any).reqId);
     res.status(500).json({
       success: false,
       error: 'Внутренняя ошибка сервера'
@@ -108,7 +109,7 @@ router.post('/parse', parseLimiter, async (req, res) => {
       total: reviews.length
     } as ApiResponse<typeof reviews>);
   } catch (error) {
-    console.error('Ошибка парсинга:', error);
+    logger.logError('Ошибка парсинга', error, (req as any).reqId);
     res.status(500).json({
       success: false,
       error: 'Ошибка при парсинге отзывов'
@@ -222,7 +223,7 @@ router.get('/reviews', async (req, res) => {
       total: result.total
     } as ApiResponse<typeof result.reviews>);
   } catch (error) {
-    console.error('Ошибка получения отзывов:', error);
+    logger.logError('Ошибка получения отзывов', error, (req as any).reqId);
     res.status(500).json({
       success: false,
       error: 'Ошибка при получении отзывов'
@@ -333,7 +334,7 @@ router.post('/export', exportLimiter, async (req, res) => {
 
     return res.status(200).send(buffer);
   } catch (error) {
-    console.error('Ошибка экспорта:', error);
+    logger.logError('Ошибка экспорта', error, (req as any).reqId);
     res.status(500).json({
       success: false,
       error: 'Ошибка при экспорте отзывов'
@@ -352,7 +353,7 @@ router.get('/regions', async (req, res) => {
       data: regions
     } as ApiResponse<typeof regions>);
   } catch (error) {
-    console.error('Ошибка получения регионов:', error);
+    logger.logError('Ошибка получения регионов', error, (req as any).reqId);
     res.status(500).json({
       success: false,
       error: 'Ошибка при получении списка регионов'

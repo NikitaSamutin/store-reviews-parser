@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import apiRoutes from './routes/api.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
+import { logger } from './utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,27 +44,17 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   res.setHeader('X-Base-Path', '/api');
   res.setHeader('X-Runtime', 'node');
   
-  const debug = (process.env.DEBUG === '1' || process.env.DEBUG === 'true' || req.headers['x-debug'] === '1');
-  if (debug) {
-    console.log('Request start', {
-      reqId,
-      method: req.method,
-      url: req.originalUrl,
-      query: req.query
-    });
-  }
   const originalEnd = (res as any).end;
   (res as any).end = function(...args: any[]) {
     try {
       const durationMs = Date.now() - start;
       res.setHeader('X-Response-Time', `${durationMs}ms`);
-      if (debug) {
-        console.log('Request end', {
-          reqId,
-          status: res.statusCode,
-          durationMs
-        });
-      }
+      logger.info('Request completed', {
+        method: req.method,
+        url: req.originalUrl,
+        status: res.statusCode,
+        durationMs,
+      }, reqId);
     } catch {}
     return originalEnd.apply(this, args);
   };
@@ -78,7 +69,7 @@ if (!fs.existsSync(dataDir)) {
   try {
     fs.mkdirSync(dataDir, { recursive: true });
   } catch (err) {
-    console.warn('Could not create data directory:', err);
+    logger.warn('Could not create data directory', { error: String(err) });
   }
 }
 
@@ -99,7 +90,8 @@ app.use(basePath, apiRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  const reqId = (req as any).reqId;
+  logger.logError('Unhandled error', err, reqId);
   res.status(500).json({
     success: false,
     error: process.env.NODE_ENV === 'production'

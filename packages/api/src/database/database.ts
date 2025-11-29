@@ -1,6 +1,7 @@
 import { Review } from '../types/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,16 +16,16 @@ let sqlite3: any = null;
 const initSqlite = async () => {
   // Для тестов можно форсировать in-memory режим
   if (process.env.FORCE_IN_MEMORY === '1') {
-    console.log('Forced in-memory mode');
+    logger.debug('Forced in-memory mode');
     return;
   }
   
   try {
     const module = await import('sqlite3');
     sqlite3 = module.default;
-    console.log('SQLite3 loaded successfully');
+    logger.info('SQLite3 loaded successfully');
   } catch (err) {
-    console.warn('SQLite3 not available, using in-memory storage');
+    logger.warn('SQLite3 not available, using in-memory storage');
   }
 };
 
@@ -107,7 +108,10 @@ export class Database {
       // Ограничиваем размер хранилища, удаляя старые отзывы
       if (allReviews.length > MAX_IN_MEMORY_REVIEWS) {
         allReviews = allReviews.slice(0, MAX_IN_MEMORY_REVIEWS);
-        console.warn(`In-memory storage limited to ${MAX_IN_MEMORY_REVIEWS} reviews, oldest removed`);
+        logger.warn('In-memory storage limit reached', { 
+          limit: MAX_IN_MEMORY_REVIEWS,
+          removed: allReviews.length - MAX_IN_MEMORY_REVIEWS 
+        });
       }
       
       this.memReviews = allReviews;
