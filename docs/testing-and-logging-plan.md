@@ -256,10 +256,11 @@ describe('POST /api/export', () => {
 - [ ] CORS тесты
 - [ ] Axios таймауты
 
-### Этап 7: Логирование
-- [ ] Создать logger
-- [ ] Заменить console.*
-- [ ] Добавить тесты на логирование
+### Этап 7: Логирование ✅
+- [x] Создать logger (`src/utils/logger.ts`)
+- [x] Заменить console.* на logger
+- [x] JSON-формат для production
+- [x] Фильтрация sensitive данных
 
 ---
 
