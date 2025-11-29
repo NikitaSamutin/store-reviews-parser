@@ -9,6 +9,7 @@ import { LogsModal } from './components/LogsModal';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
 import { ReviewsListSkeleton } from './components/ReviewsListSkeleton';
+// import { ReviewsStats } from './components/ReviewsStats'; // временно скрыт
 import { EmptyState } from './components/EmptyState';
 import { ServerStatus } from './components/ServerStatus';
 import debounce from 'lodash.debounce';
@@ -279,28 +280,53 @@ function App() {
 
                 {/* Результаты */}
                 {selectedApp && (
-                  <div className="card">
-                    <div className="card-header">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h2 className="text-lg font-semibold">
-                            Отзывы для "{selectedApp.name}"
-                          </h2>
-                          <p className="text-sm text-gray-500">
-                            {totalReviews > 0 && `Найдено ${totalReviews} отзывов`}
-                          </p>
+                  <>
+                    {/* Дашборд со статистикой - временно скрыт */}
+                    {/* {!isLoading && !isParsing && !error && filteredReviews.length > 0 && (
+                      <ReviewsStats
+                        reviews={filteredReviews}
+                        totalReviews={totalReviews}
+                        selectedApp={selectedApp}
+                        onExport={() => setShowExportModal(true)}
+                      />
+                    )} */}
+
+                    <div className="card">
+                      <div className="card-header">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                            <h2 className="card-title flex items-center gap-2">
+                              {selectedApp.name}
+                              <a 
+                                href={selectedApp.store === 'google' 
+                                  ? `https://play.google.com/store/apps/details?id=${selectedApp.id}` 
+                                  : `https://apps.apple.com/app/${selectedApp.id.startsWith('id') ? selectedApp.id : `id${selectedApp.id}`}`
+                                } 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                                title={`Открыть в ${selectedApp.store === 'google' ? 'Google Play' : 'App Store'}`}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            </h2>
+                            <p className="card-description mt-1">
+                              {filteredReviews.length > 0 ? `Показано ${filteredReviews.length} из ${totalReviews} отзывов` : `Всего найдено ${totalReviews} отзывов`}
+                            </p>
+                          </div>
+                          {filteredReviews.length > 0 && (
+                             <button
+                               onClick={() => setShowExportModal(true)}
+                               className="btn btn-outline btn-sm whitespace-nowrap"
+                             >
+                               Экспорт CSV/JSON
+                             </button>
+                          )}
                         </div>
-                        {filteredReviews.length > 0 && (
-                          <button
-                            onClick={() => setShowExportModal(true)}
-                            className="btn btn-outline btn-sm"
-                          >
-                            Экспорт
-                          </button>
-                        )}
                       </div>
-                    </div>
-                    <div className="card-content">
+                      <div className="card-content">
                       {/* Состояния загрузки и ошибок */}
                       {isParsing && (
                         <div className="flex items-center justify-center py-12">
@@ -366,6 +392,7 @@ function App() {
                       )}
                     </div>
                   </div>
+                  </>
                 )}
 
                 {/* Пустое состояние */}

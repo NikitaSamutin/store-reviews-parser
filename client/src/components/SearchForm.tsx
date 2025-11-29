@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Smartphone } from 'lucide-react';
+import { Search, Smartphone, ChevronDown } from 'lucide-react';
 import { AppSearchResult } from '@/types';
 import { apiService } from '@/services/api';
 import { debounce } from '@/utils/helpers';
@@ -100,33 +100,35 @@ export const SearchForm: React.FC<SearchFormProps> = ({
   return (
     <div className="space-y-6">
       <div className="relative" ref={searchContainerRef}>
-        {/* Переключатель магазина */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+        {/* Переключатель магазина (Segmented Control) */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Магазин приложений
           </label>
-          <div className="flex space-x-2">
+          <div className="inline-flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => { setSelectedStore('all'); onContextChange?.({ store: 'all', region: searchRegion }); }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                 selectedStore === 'all'
-                  ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700'
-                  : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:border-transparent'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
-              🌐 Все магазины
+              <span>🌐</span>
+              <span>Все</span>
             </button>
             {STORES.map((store) => (
               <button
                 key={store.value}
                 onClick={() => { setSelectedStore(store.value); onContextChange?.({ store: store.value, region: searchRegion }); }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                   selectedStore === store.value
-                    ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700'
-                    : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:border-transparent'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
-                {store.icon} {store.label}
+                <span>{store.icon}</span>
+                <span>{store.label}</span>
               </button>
             ))}
           </div>
@@ -144,7 +146,7 @@ export const SearchForm: React.FC<SearchFormProps> = ({
               <input
                 id="search"
                 type="text"
-                className="input pl-10"
+                className="input !pl-10"
                 placeholder="Например, Telegram"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -162,18 +164,23 @@ export const SearchForm: React.FC<SearchFormProps> = ({
             <label htmlFor="search-region" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Регион поиска
             </label>
-            <select
-              id="search-region"
-              className="input"
-              value={searchRegion}
-              onChange={(e) => { const r = e.target.value; setSearchRegion(r); onContextChange?.({ store: selectedStore, region: r }); }}
-            >
-              {REGIONS.map((region) => (
-                <option key={region.value} value={region.value}>
-                  {region.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                id="search-region"
+                className="input appearance-none pr-10"
+                value={searchRegion}
+                onChange={(e) => { const r = e.target.value; setSearchRegion(r); onContextChange?.({ store: selectedStore, region: r }); }}
+              >
+                {REGIONS.map((region) => (
+                  <option key={region.value} value={region.value}>
+                    {region.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              </div>
+            </div>
           </div>
         </div>
 

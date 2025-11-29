@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, RotateCcw } from 'lucide-react';
+import { Calendar, RotateCcw, ChevronDown } from 'lucide-react';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FilterOptions, AppSearchResult } from '@/types';
@@ -92,16 +92,21 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             На странице
           </label>
-          <select
-            className="input"
-            value={filters.limit || 50}
-            onChange={(e) => handleFilterChange('limit', Number(e.target.value))}
-            disabled={isLoading}
-          >
-            <option value={25}>25 отзывов</option>
-            <option value={50}>50 отзывов</option>
-            <option value={100}>100 отзывов</option>
-          </select>
+          <div className="relative">
+            <select
+              className="input appearance-none pr-10"
+              value={filters.limit || 50}
+              onChange={(e) => handleFilterChange('limit', Number(e.target.value))}
+              disabled={isLoading}
+            >
+              <option value={25}>25 отзывов</option>
+              <option value={50}>50 отзывов</option>
+              <option value={100}>100 отзывов</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            </div>
+          </div>
         </div>
       </div>
 
