@@ -8,11 +8,11 @@
 
 ## ⚠️ Важное замечание
 
-**Netlify больше не используется.** Все упоминания Netlify в коде подлежат удалению:
-- Удалить папку `netlify/functions/`
-- Удалить проверки `isNetlify` / `AWS_LAMBDA_FUNCTION_NAME` из кода
-- Удалить `serverless-http` из зависимостей
-- Обновить CORS и логирование (убрать Netlify-специфичную логику)
+**Netlify больше не используется.** ✅ Все упоминания Netlify удалены:
+- ~~Удалить папку `netlify/functions/`~~ ✅
+- ~~Удалить проверки `isNetlify` / `AWS_LAMBDA_FUNCTION_NAME` из кода~~ ✅
+- ~~Удалить `serverless-http` из зависимостей~~ ✅
+- ~~Обновить CORS и логирование (убрать Netlify-специфичную логику)~~ ✅
 
 ---
 
@@ -282,15 +282,17 @@
 
 ---
 
-## Задачи по удалению Netlify
+## Задачи по удалению Netlify ✅ ЗАВЕРШЕНО
 
-- [ ] Удалить папку `netlify/functions/`
-- [ ] Удалить файл `netlify.toml` (если есть)
-- [ ] Удалить `serverless-http` из `package.json`
-- [ ] Удалить все проверки `isNetlify` / `AWS_LAMBDA_FUNCTION_NAME`
-- [ ] Упростить CORS-конфигурацию
-- [ ] Удалить Netlify-специфичное логирование
-- [ ] Обновить README с актуальной информацией о деплое
+- [x] Удалить папку `netlify/functions/`
+- [x] Удалить файл `netlify.toml`
+- [x] Удалить `serverless-http` из `package.json`
+- [x] Удалить все проверки `isNetlify` / `AWS_LAMBDA_FUNCTION_NAME`
+- [x] Удалить Netlify-специфичное логирование
+- [x] Удалить `client/public/_redirects` (Netlify redirects)
+- [x] Удалить `client/railway.json` (Railway config)
+- [x] Обновить README с актуальной информацией о деплое (Render)
+- [x] Очистить комментарии в коде от упоминаний Netlify
 
 ---
 

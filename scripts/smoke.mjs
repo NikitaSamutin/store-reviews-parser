@@ -49,7 +49,7 @@ async function waitForHealthy(maxAttempts = 20, intervalMs = 15000) {
 
 (async () => {
   try {
-    // Wait until deploy is healthy (tolerate Netlify deploy latency)
+    // Wait until deploy is healthy
     await waitForHealthy();
 
     // Search via App Store (стабильнее для smoke)

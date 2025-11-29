@@ -1,10 +1,11 @@
 import { Review } from '../types/index.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// AWS_LAMBDA_FUNCTION_NAME присутствует только в Netlify Functions runtime
-const isNetlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Динамический импорт sqlite3 только для локальной среды
+// Динамический импорт sqlite3
 let sqlite3: any = null;
 
 export class Database {
@@ -13,13 +14,14 @@ export class Database {
   private memReviews: Review[] = [];
 
   constructor() {
-    this.inMemory = isNetlify || !sqlite3;
+    // Пытаемся использовать SQLite, если не получится — fallback на in-memory
+    this.inMemory = !sqlite3;
     if (this.inMemory) {
-      // Используем память в среде Netlify Functions
+      // Используем память как fallback
       this.db = null;
       return;
     }
-    const baseDir = isNetlify ? '/tmp' : path.join(__dirname, '..', '..');
+    const baseDir = path.join(__dirname, '..', '..');
     const dbPath = path.join(baseDir, 'data', 'reviews.db');
     this.db = new sqlite3.Database(dbPath);
     this.initTables();

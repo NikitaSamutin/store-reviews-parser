@@ -36,6 +36,3 @@ SOLUTION.md
 scripts/diagnose.mjs
 docs/plan.md
 windsurf_deployment.yaml
-
-# Local Netlify folder
-.netlify

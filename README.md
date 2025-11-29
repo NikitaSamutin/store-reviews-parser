@@ -154,11 +154,14 @@ store_parser/
 - **Обработка ошибок** и состояний загрузки
 - **Адаптивный дизайн** для всех устройств
 
-## Деплой на Netlify
+## Деплой на Render
 
 1. Соберите проект: `npm run build`
-2. Загрузите папку `client/dist` на Netlify
-3. Настройте переменные окружения для API
+2. Создайте Web Service на Render для backend (`packages/api`)
+3. Создайте Static Site на Render для frontend (`client/dist`)
+4. Настройте переменные окружения:
+   - `ALLOWED_ORIGINS` — домен фронтенда для CORS
+   - `NODE_ENV=production`
 
 ## Лицензия
 

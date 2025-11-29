@@ -1,17 +1,20 @@
-// Назначение файла: конфигурация Express-приложения (middleware, маршруты, обработчики ошибок). Без записи экспортов на диск.
+// Назначение файла: конфигурация Express-приложения (middleware, маршруты, обработчики ошибок).
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import apiRoutes from './routes/api.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
 // Middleware
 app.use(helmet());
 app.use(compression());
-// CORS: в проде разрешаем все источники по умолчанию ('*'), либо список из ALLOWED_ORIGINS
+// CORS: в проде разрешаем список из ALLOWED_ORIGINS, иначе localhost для разработки
 app.use(cors({
     origin: (() => {
         if (process.env.NODE_ENV === 'production') {
@@ -31,23 +34,8 @@ app.use((req, res, next) => {
     const reqId = req.headers['x-request-id'] || randomUUID();
     res.setHeader('X-Request-Id', reqId);
     req.reqId = reqId;
-    const netlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-    const bp = netlify ? '/.netlify/functions/api' : '/api';
-    res.setHeader('X-Base-Path', bp);
-    const runtime = netlify ? 'netlify-functions' : 'local';
-    res.setHeader('X-Runtime', runtime);
-    // Всегда логируем в Netlify для отладки
-    if (netlify) {
-        console.log('Netlify request:', {
-            reqId,
-            method: req.method,
-            url: req.url,
-            originalUrl: req.originalUrl,
-            baseUrl: req.baseUrl,
-            path: req.path,
-            headers: req.headers
-        });
-    }
+    res.setHeader('X-Base-Path', '/api');
+    res.setHeader('X-Runtime', 'node');
     const debug = (process.env.DEBUG === '1' || process.env.DEBUG === 'true' || req.headers['x-debug'] === '1');
     if (debug) {
         console.log('Request start', {
@@ -75,36 +63,25 @@ app.use((req, res, next) => {
     };
     next();
 });
-// Создаём необходимые директории
-// На Netlify функции файловая система только для записи в /tmp
-// AWS_LAMBDA_FUNCTION_NAME присутствует только в Netlify Functions runtime
-const isNetlify = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-const baseWritableDir = isNetlify ? '/tmp' : path.join(__dirname, '..');
+// Создаём необходимые директории для данных
+const baseWritableDir = path.join(__dirname, '..');
 const dataDir = path.join(baseWritableDir, 'data');
-// В serverless окружении создаём директорию только если её нет
 if (!fs.existsSync(dataDir)) {
     try {
         fs.mkdirSync(dataDir, { recursive: true });
     }
     catch (err) {
-        // Игнорируем ошибки создания директории в read-only FS
         console.warn('Could not create data directory:', err);
     }
 }
-// Директория exports больше не нужна — экспорт отдаётся напрямую в ответе
-// В Netlify Functions serverless-http уже обрезает путь к функции,
-// поэтому Express получает только /health вместо /.netlify/functions/api/health
-// В локальной среде используем префикс /api
-// В Netlify Functions serverless-http НЕ обрезает путь функции
-// Express получает ПОЛНЫЙ путь включая /.netlify/functions/api
-const basePath = isNetlify ? '/.netlify/functions/api' : '/api';
+const basePath = '/api';
 // Health check
 app.get(`${basePath}/health`, (req, res) => {
     res.json({
         status: 'OK',
         timestamp: new Date().toISOString(),
-        version: '1.0.8',
-        runtime: isNetlify ? 'netlify-functions' : 'local'
+        version: '1.0.9',
+        runtime: 'node'
     });
 });
 // API Routes
